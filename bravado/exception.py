@@ -82,9 +82,9 @@ class HTTPError(with_metaclass(HTTPErrorType, IOError)):
         # since this is the first thing a developer sees when bad things
         # happen.
         status_and_reason = str(self.response)
-        message = ': ' + self.message if self.message else ''
+        message = f': {self.message}' if self.message else ''
         result = ': {0}'.format(self.swagger_result) \
-            if self.swagger_result is not None else ''
+                if self.swagger_result is not None else ''
         return '{0}{1}{2}'.format(status_and_reason, message, result)
 
 
@@ -138,10 +138,10 @@ class HTTPServerError(HTTPError):
         # since this is the first thing a developer sees when bad things
         # happen.
         status_and_reason = str(self.response)
-        message = ': ' + self.message if self.message else ''
-        text = ': ' + self.response.text if self.response.text else ''
+        message = f': {self.message}' if self.message else ''
+        text = f': {self.response.text}' if self.response.text else ''
         result = ': {0}'.format(self.swagger_result) \
-            if self.swagger_result is not None else ''
+                if self.swagger_result is not None else ''
         return '{0}{1}{2}{3}'.format(status_and_reason, message, text, result)
 
 

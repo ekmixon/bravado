@@ -49,9 +49,7 @@ class DocstringProperty(object):
         self.fget = fget
 
     def __get__(self, obj, objtype=None):
-        if objtype is None:
-            return self.class_doc
-        return self.fget(obj)
+        return self.class_doc if objtype is None else self.fget(obj)
 
     def __set__(self, obj, value):
         raise AttributeError("can't set attribute")

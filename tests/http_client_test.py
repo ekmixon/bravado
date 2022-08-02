@@ -95,8 +95,9 @@ class RequestsClientTestCase(unittest.TestCase):
         self.assertEqual({'foo': ['bar']},
                          httpretty.last_request().querystring)
         self.assertEqual(
-            'Basic %s' % base64.b64encode(b"unit:peekaboo").decode('utf-8'),
-            httpretty.last_request().headers.get('Authorization'))
+            f"""Basic {base64.b64encode(b"unit:peekaboo").decode('utf-8')}""",
+            httpretty.last_request().headers.get('Authorization'),
+        )
 
     @httpretty.activate
     def test_api_key(self):

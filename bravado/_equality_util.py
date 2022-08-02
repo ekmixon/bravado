@@ -34,7 +34,7 @@ def are_objects_equal(obj1, obj2, attributes_to_ignore=None):
         if attr_name in attributes_to_ignore:
             continue
         try:
-            if not (getattr(obj1, attr_name) == getattr(obj2, attr_name)):
+            if getattr(obj1, attr_name) != getattr(obj2, attr_name):
                 return False
         except AttributeError:
             return False

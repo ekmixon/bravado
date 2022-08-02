@@ -45,7 +45,7 @@ class FileEventual(object):
 
     def get_path(self):
         if not self.path.endswith('.json') and not self.is_yaml:
-            return self.path + '.json'
+            return f'{self.path}.json'
         return self.path
 
     def wait(self, **kwargs):

@@ -37,7 +37,7 @@ class Authenticator(object):
 
     def __repr__(self):
         # type: () -> str
-        return "%s(%s)" % (self.__class__.__name__, self.host)
+        return f"{self.__class__.__name__}({self.host})"
 
     def matches(self, url):
         # type: (typing.Text) -> bool
@@ -212,23 +212,27 @@ class RequestsFutureAdapter(FutureAdapter):
         has_service_timeout = 'timeout' in self.misc_options
         service_timeout = self.misc_options.get('timeout')
 
-        if not has_service_timeout:
+        if (
+            has_service_timeout
+            and service_timeout != result_timeout
+            and service_timeout is None
+            or not has_service_timeout
+        ):
             timeout = result_timeout
-        elif service_timeout == result_timeout:
+        elif (
+            service_timeout != result_timeout
+            and result_timeout is None
+            or service_timeout == result_timeout
+        ):
             timeout = service_timeout
         else:
-            if service_timeout is None:
-                timeout = result_timeout
-            elif result_timeout is None:
-                timeout = service_timeout
-            else:
-                timeout = max(service_timeout, result_timeout)
-                log.warning(
-                    "Two different timeouts have been passed: "
-                    "_request_options['timeout'] = %s and "
-                    "future.result(timeout=%s). Using timeout of %s.",
-                    service_timeout, result_timeout, timeout,
-                )
+            timeout = max(service_timeout, result_timeout)
+            log.warning(
+                "Two different timeouts have been passed: "
+                "_request_options['timeout'] = %s and "
+                "future.result(timeout=%s). Using timeout of %s.",
+                service_timeout, result_timeout, timeout,
+            )
 
         # Requests is weird in that if you want to specify a connect_timeout
         # and idle timeout, then the timeout is passed as a tuple
@@ -251,9 +255,10 @@ class RequestsFutureAdapter(FutureAdapter):
         # Ensure that all the headers are converted to strings.
         # This is need to workaround https://github.com/requests/requests/issues/3491
         request.headers = {
-            k: str(v) if not isinstance(v, six.binary_type) else v
+            k: v if isinstance(v, six.binary_type) else str(v)
             for k, v in iteritems(request.headers)
         }
+
 
         prepared_request = self.session.prepare_request(request)
         settings = self.session.merge_environment_settings(
@@ -263,13 +268,12 @@ class RequestsFutureAdapter(FutureAdapter):
             verify=self.misc_options['ssl_verify'],
             cert=self.misc_options['ssl_cert'],
         )
-        response = self.session.send(
+        return self.session.send(
             prepared_request,
             timeout=self.build_timeout(timeout),
             allow_redirects=self.misc_options['follow_redirects'],
             **settings
         )
-        return response
 
     def cancel(self):
         # type: () -> None

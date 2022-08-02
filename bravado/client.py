@@ -145,15 +145,14 @@ class SwaggerClient(object):
         :param item: name of the resource to return
         :return: :class:`Resource`
         """
-        resource = self.swagger_spec.resources.get(item)
-        if not resource:
+        if resource := self.swagger_spec.resources.get(item):
+            # Wrap bravado-core's Resource and Operation objects in order to
+            # execute a service call via the http_client.
+            return ResourceDecorator(resource, self.__also_return_response)
+        else:
             raise AttributeError(
                 'Resource {0} not found. Available resources: {1}'
                 .format(item, ', '.join(dir(self))))
-
-        # Wrap bravado-core's Resource and Operation objects in order to
-        # execute a service call via the http_client.
-        return ResourceDecorator(resource, self.__also_return_response)
 
     def __deepcopy__(self, memo=None):
         if memo is None:
@@ -164,7 +163,7 @@ class SwaggerClient(object):
         )
 
     def __repr__(self):
-        return u"%s(%s)" % (self.__class__.__name__, self.swagger_spec.api_url)
+        return f"{self.__class__.__name__}({self.swagger_spec.api_url})"
 
     def __getattr__(self, item):
         return self._get_resource(item)
@@ -179,13 +178,11 @@ class SwaggerClient(object):
         if not isinstance(other, SwaggerClient):
             return False
 
-        if not self.swagger_spec.is_equal(other.swagger_spec):
-            return False
-
-        if self.__also_return_response != other.__also_return_response:
-            return False
-
-        return True
+        return (
+            self.__also_return_response == other.__also_return_response
+            if self.swagger_spec.is_equal(other.swagger_spec)
+            else False
+        )
 
 
 def inject_headers_for_remote_refs(request_callable, request_headers):

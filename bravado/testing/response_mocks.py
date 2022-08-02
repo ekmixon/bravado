@@ -31,17 +31,14 @@ class BravadoResponseMock(typing.Generic[T]):
     def __init__(self, result, metadata=None):
         # type: (T, typing.Optional[BravadoResponseMetadata[T]]) -> None
         self._result = result
-        if metadata:
-            self._metadata = metadata
-        else:
-            self._metadata = BravadoResponseMetadata(
-                incoming_response=IncomingResponseMock(status_code=200),
-                swagger_result=self._result,
-                start_time=1528733800,
-                request_end_time=1528733801,
-                handled_exception_info=None,
-                request_config=RequestConfig({}, also_return_response_default=False),
-            )
+        self._metadata = metadata or BravadoResponseMetadata(
+            incoming_response=IncomingResponseMock(status_code=200),
+            swagger_result=self._result,
+            start_time=1528733800,
+            request_end_time=1528733801,
+            handled_exception_info=None,
+            request_config=RequestConfig({}, also_return_response_default=False),
+        )
 
     def __call__(
         self,
@@ -70,17 +67,18 @@ class FallbackResultBravadoResponseMock(object):
     def __init__(self, exception=BravadoTimeoutError(), metadata=None):
         # type: (BaseException, typing.Optional[BravadoResponseMetadata]) -> None
         self._exception = exception
-        if metadata:
-            self._metadata = metadata
-        else:
-            self._metadata = BravadoResponseMetadata(
-                incoming_response=IncomingResponse(),
-                swagger_result=None,  # we're going to set it later
-                start_time=1528733800,
-                request_end_time=1528733801,
-                handled_exception_info=[self._exception.__class__, self._exception, 'Traceback'],
-                request_config=RequestConfig({}, also_return_response_default=False),
-            )
+        self._metadata = metadata or BravadoResponseMetadata(
+            incoming_response=IncomingResponse(),
+            swagger_result=None,  # we're going to set it later
+            start_time=1528733800,
+            request_end_time=1528733801,
+            handled_exception_info=[
+                self._exception.__class__,
+                self._exception,
+                'Traceback',
+            ],
+            request_config=RequestConfig({}, also_return_response_default=False),
+        )
 
     @overload
     def __call__(

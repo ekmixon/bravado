@@ -67,7 +67,7 @@ class FutureAdapter(typing.Generic[T]):
     def _raise_error(self, base_exception_class, class_name_suffix, exception):
         # type: (typing.Type[BaseException], typing.Text, BaseException) -> typing.NoReturn
         error = type(
-            '{}{}'.format(self.__class__.__name__, class_name_suffix),
+            f'{self.__class__.__name__}{class_name_suffix}',
             (exception.__class__, base_exception_class),
             dict(
                 # Small hack to allow all exceptions to be generated even if they have parameters in the signature
@@ -75,6 +75,7 @@ class FutureAdapter(typing.Generic[T]):
                 __init__=lambda *args, **kwargs: None,
             ),
         )()
+
 
         six.reraise(
             error.__class__,
@@ -289,8 +290,7 @@ class HttpFuture(typing.Generic[T]):
     def _get_incoming_response(self, timeout=None):
         # type: (typing.Optional[float]) -> IncomingResponse
         inner_response = self.future.result(timeout=timeout)
-        incoming_response = self.response_adapter(inner_response)
-        return incoming_response
+        return self.response_adapter(inner_response)
 
     @reraise_errors  # unmarshal_response_inner calls response.json(), which might raise errors
     def _get_swagger_result(self, incoming_response):

@@ -25,12 +25,8 @@ def getPetById_spec(petstore_dict):
 
 @pytest.fixture
 def minimal_swagger_dict(getPetById_spec):
-    spec_dict = {
-        'paths': {
-            '/pet/{petId}': {
-                'get': getPetById_spec
-            }
-        },
+    return {
+        'paths': {'/pet/{petId}': {'get': getPetById_spec}},
         'securityDefinitions': {
             'api_key': {
                 'type': 'apiKey',
@@ -39,7 +35,6 @@ def minimal_swagger_dict(getPetById_spec):
             },
         },
     }
-    return spec_dict
 
 
 @pytest.fixture

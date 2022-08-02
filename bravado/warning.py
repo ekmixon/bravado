@@ -18,12 +18,10 @@ def warn_for_deprecated_op(op):
         message = "[DEPRECATED] {0} has now been deprecated. ".format(
             op.operation_id)
 
-        dep_date = op.op_spec.get('x-deprecated-date')
-        if dep_date:
+        if dep_date := op.op_spec.get('x-deprecated-date'):
             message += "Deprecation Date: {0}. ".format(dep_date)
 
-        rem_date = op.op_spec.get('x-removal-date')
-        if rem_date:
+        if rem_date := op.op_spec.get('x-removal-date'):
             message += "Removal Date: {0}".format(rem_date)
 
         warnings.warn(message, Warning)

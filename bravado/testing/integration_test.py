@@ -187,11 +187,10 @@ def api_json():
 
 @bottle.route('/json_or_msgpack')
 def api_json_or_msgpack():
-    if bottle.request.headers.get('accept') == APP_MSGPACK:
-        bottle.response.content_type = APP_MSGPACK
-        return packb(API_RESPONSE)
-    else:
+    if bottle.request.headers.get('accept') != APP_MSGPACK:
         return API_RESPONSE
+    bottle.response.content_type = APP_MSGPACK
+    return packb(API_RESPONSE)
 
 
 @bottle.route('/1')
@@ -289,7 +288,7 @@ class IntegrationTestingServicesAndClient:
 
     @pytest.fixture(scope='session')
     def not_answering_http_server(self):
-        yield 'http://127.0.0.1:{}'.format(ephemeral_port_reserve.reserve())
+        yield f'http://127.0.0.1:{ephemeral_port_reserve.reserve()}'
 
     @pytest.fixture(params=['result', 'response'])
     def result_getter(self, request):
@@ -318,19 +317,11 @@ class IntegrationTestingFixturesMixin(IntegrationTestingServicesAndClient):
     @classmethod
     def setup_class(cls):
         if cls.http_client_type is None:
-            raise RuntimeError(  # pragma: no cover
-                'Define http_client_type for {}'.format(cls.__name__)
-            )
+            raise RuntimeError(f'Define http_client_type for {cls.__name__}')
         if cls.http_future_adapter_type is None:
-            raise RuntimeError(  # pragma: no cover
-                'Define http_future_adapter_type for {}'.format(cls.__name__)
-            )
+            raise RuntimeError(f'Define http_future_adapter_type for {cls.__name__}')
         if cls.connection_errors_exceptions is None:
-            raise RuntimeError(  # pragma: no cover
-                'Define connection_errors_exceptions for {}'.format(
-                    cls.__name__,
-                ),
-            )
+            raise RuntimeError(f'Define connection_errors_exceptions for {cls.__name__}')
         cls.http_client = cls.http_client_type()
 
     @pytest.fixture
@@ -475,9 +466,9 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
         assert {
             header_name: {
                 'type': _class_fqn(str),
-                'representation': expected_header_representations[header_name]
+                'representation': expected_header_representations[header_name],
             }
-            for header_name, header_value in headers.items()
+            for header_name in headers
         } == response.json()
 
     def test_msgpack_support(self, swagger_http_server):
@@ -532,7 +523,7 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
 
     def test_timeout_errors_are_thrown_as_BravadoTimeoutError(self, swagger_http_server):
         if not self.http_future_adapter_type.timeout_errors:
-            pytest.skip('{} does NOT defines timeout_errors'.format(self.http_future_adapter_type))
+            pytest.skip(f'{self.http_future_adapter_type} does NOT defines timeout_errors')
 
         with pytest.raises(BravadoTimeoutError):
             self.http_client.request({
@@ -543,7 +534,7 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
 
     def test_request_timeout_errors_are_thrown_as_BravadoTimeoutError(self, swagger_http_server):
         if not self.http_future_adapter_type.timeout_errors:
-            pytest.skip('{} does NOT defines timeout_errors'.format(self.http_future_adapter_type))
+            pytest.skip(f'{self.http_future_adapter_type} does NOT defines timeout_errors')
 
         with pytest.raises(BravadoTimeoutError):
             self.http_client.request({
@@ -557,7 +548,7 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
         self, swagger_client, result_getter,
     ):
         if not self.http_future_adapter_type.timeout_errors:
-            pytest.skip('{} does NOT defines timeout_errors'.format(self.http_future_adapter_type))
+            pytest.skip(f'{self.http_future_adapter_type} does NOT defines timeout_errors')
 
         with pytest.raises(BravadoTimeoutError):
             result_getter(
@@ -567,7 +558,7 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
 
     def test_timeout_errors_are_catchable_with_original_exception_types(self, swagger_http_server):
         if not self.http_future_adapter_type.timeout_errors:
-            pytest.skip('{} does NOT defines timeout_errors'.format(self.http_future_adapter_type))
+            pytest.skip(f'{self.http_future_adapter_type} does NOT defines timeout_errors')
 
         for expected_exception in self.http_future_adapter_type.timeout_errors:
             with pytest.raises(expected_exception) as excinfo:
@@ -580,7 +571,10 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
 
     def test_connection_errors_are_thrown_as_BravadoConnectionError(self, not_answering_http_server):
         if not self.http_future_adapter_type.connection_errors:
-            pytest.skip('{} does NOT defines connection_errors'.format(self.http_future_adapter_type))
+            pytest.skip(
+                f'{self.http_future_adapter_type} does NOT defines connection_errors'
+            )
+
 
         with pytest.raises(BravadoConnectionError):
             self.http_client.request({
@@ -592,9 +586,9 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
             }).result(timeout=1)
 
     def test_connection_errors_exceptions_contains_all_future_adapter_connection_errors(self):
-        assert set(
-            type(e) for e in self.connection_errors_exceptions
-        ) == set(self.http_future_adapter_type.connection_errors)
+        assert {type(e) for e in self.connection_errors_exceptions} == set(
+            self.http_future_adapter_type.connection_errors
+        )
 
     def test_connection_errors_are_catchable_with_original_exception_types(
         self, not_answering_http_server,
@@ -626,7 +620,10 @@ class IntegrationTestsBaseClass(IntegrationTestingFixturesMixin):
         self, not_answering_http_server, swagger_client, result_getter,
     ):
         if not self.http_future_adapter_type.connection_errors:
-            pytest.skip('{} does NOT defines connection_errors'.format(self.http_future_adapter_type))
+            pytest.skip(
+                f'{self.http_future_adapter_type} does NOT defines connection_errors'
+            )
+
 
         # override api url to communicate with a non responding http server
         swagger_client.swagger_spec.api_url = not_answering_http_server
